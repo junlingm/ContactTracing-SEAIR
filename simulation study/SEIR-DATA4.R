@@ -3,76 +3,7 @@ library(mcmc)
 library(coda)
 library(ggmcmc)
 
-
-seir_model <- function(params, times,fixed) {
-  # the differential equations:
-  seir_equations <- function(time, variables, parameters) {
-    with(as.list(c(variables, parameters)), {
-      
-      
-      if(time >60) beta<-betaI3
-      else if (time>=40) beta<-betaI2
-      else beta<-betaI1
-      
-      
-      
-      dS <- -beta*S*I/N
-      dE <- beta*S*I/N-sigma*E-theta*p*ET
-      dI<- sigma*E-(gamma+tau)*I-theta*p*IT-theta*p*TI
-      dEI<- beta*S*I/N-(sigma+tau+gamma)*EI-theta*p*EI*(IT/I+TI/I)
-      dET<- tau*EI+theta*p*EI*(IT/I+TI/I)-(sigma+theta)*ET
-      dII<- sigma*EI-2*(gamma+tau)*II-theta*p*II*(IT/I+TI/I+TI/I)
-      dIT<-sigma*ET+theta*p*II*(IT/I+TI/I)+tau*II-(tau+theta+gamma)*IT-theta*p*TI*IT/I
-      dTI<- theta*p*TI*II/I+tau*II-(tau+theta+gamma)*TI-theta*p*(TI*IT/I+TI*TI/I)
-      dQ<-theta*p*ET-sigma*Q
-      dT<-sigma*Q+tau*I+theta*p*(IT+TI)-theta*T
-      dX<-theta*T
-      dR<-gamma*I
-      dnew <-tau*I+theta*p*(IT+TI)+sigma*Q
-      dcon<-theta*p*(IT+TI)
-      dQT<- sigma*Q
-      dvol<- tau*I
-      dsym <- sigma*E
-      
-      
-      return(list(c(dS, dE,dI,dEI,dET,dII,dIT,dTI,dQ,dT,dX,dR,dnew,dcon,dQT,dvol,dsym)))
-    })
-  }
-  
-  
-  # the initial values of variables
-  
-  I0 = params[[7]]*10
-  
-  initial_values <- c( S=fixed[["N"]] - 2*I0, E=I0, I=I0, 
-                       EI=0,ET=0,II =0,
-                       IT=0,TI=0,Q=0,T=0,X=0,R=0,
-                       new=0,con=0,QT=0,vol=0,sym=0 )
-  # the parameters values:
-  parameters_values <- c(c(betaI1  = params[[1]],
-                           betaI2  = params[[2]],
-                           betaI3  = params[[3]],
-                           theta = params[[4]],
-                           p = params[[5]],
-                           tau= params[[6]] ), fixed)
-  
-  
-  # solving
-  ode(initial_values, times, seir_equations, parameters_values)
-}
-
-
-fixed <- c(sigma = 0.27,
-           gamma= 0.1, 
-           q= 0.3,
-           N=14726022
-)
-
-
-
-data <- read.csv("T80-Nlarge-3beta-2.csv", header = TRUE)
-
-
+source("simulation study/SEIR-3beta.R")
 
 likelihood <- function(parameters, fixed, data, times=c(0, data$t)) {
   if (any(parameters<0))
@@ -100,32 +31,8 @@ likelihood <- function(parameters, fixed, data, times=c(0, data$t)) {
   return(log_likelihood)
 }
 
-prior <- function(parameters) {
-  if(any(parameters < 0))
-    return(-Inf)
-  betaI1_prior = dnorm(parameters[[1]], mean=0.55, sd=0.2, log = T)
-  betaI2_prior = dnorm(parameters[[2]], mean=0.25, sd=0.2, log = T)
-  betaI3_prior = dnorm(parameters[[3]], mean=0.4, sd=0.2, log = T)
-  theta_prior = dnorm(parameters[[4]], mean=1.5, sd=1, log = T)
-  p_prior = dunif(parameters[[5]], 0, 1, log = T)
-  tau_prior = dnorm(parameters[[6]], mean=0.15, sd=0.1, log = T)
-  I0_prior = dnorm(parameters[[7]], mean=1, sd=1, log = T)
-  return(betaI1_prior+betaI2_prior+betaI3_prior+theta_prior+p_prior+tau_prior+I0_prior)
-}
 
-
-
-
-parameters_initial <- c(betaI1 = 0.4729350,betaI2 =  0.2635146, betaI3 = 0.3439327,  theta=1.8214296, p=0.1688085,tau=0.1553022, I0=3.2910579)
-
-
-joint_log_prob <- function(parameters, fixed, data, times=c(0, data$t)) {
-  log_likelihood <- likelihood(parameters, fixed=fixed, data=data, times=times)
-  log_prior <- prior(parameters)
-  return(log_likelihood + log_prior)
-}
-
-
+parameters_initial <- c(betaI1 = 0.4729350,betaI2 =  0.2635146, betaI3 = 0.3439327,  theta=1.8214296, p=0.1688085,tau=0.1553022, I0=32.910579)
 
 mcmc_samples <- metrop(obj=joint_log_prob,
                        parameters_initial,
