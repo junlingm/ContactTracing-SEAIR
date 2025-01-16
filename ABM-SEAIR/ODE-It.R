@@ -13,7 +13,7 @@ seair_model <- function(params, times,fixed) {
                        EI=0,EA=0,ET=0,AI = 0,IA =0,II =0,
                        AT = 0,TA = 0,
                        IT=0,TI=0,T=0,X=0,R=0,
-                       new=0,con=0,vol=0 )
+                       new=0,con=0,vol=0, sym=0)
   # the parameters values:
   parameters_values <- c(c(betaI  = params[["betaI"]],
                            betaA  = params[["betaA"]],

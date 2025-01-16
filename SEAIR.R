@@ -23,7 +23,8 @@ seair_equations <- function(time, variables, parameters) {
     dnew <-  tauI*I+theta*p*(IT+TI)+sigma*(1-q)*QE
     dcon <-  theta*p*(IT+TI)+sigma*(1-q)*QE
     dvol <-  sigma*(1-q)*QE
+    dsym <- sigma*(1-q)*E
     
-    return(list(c(dS, dE,dA,dI,dQE, dQA,dEI,dEA,dET,dAI,dIA,dII,dAT,dTA,dIT,dTI,dT,dX,dR,dnew,dcon,dvol)))
+    return(list(c(dS, dE,dA,dI,dQE, dQA,dEI,dEA,dET,dAI,dIA,dII,dAT,dTA,dIT,dTI,dT,dX,dR,dnew,dcon,dvol,dsym)))
   })
 }
