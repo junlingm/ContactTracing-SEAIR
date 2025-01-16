@@ -63,6 +63,7 @@ run <- function() {
   sim$addTransition("E" -> "I", sigma * (1 - q))
   sim$addTransition("E" -> "A", sigma * q)
   sim$addTransition("A" -> "T", tauA)
+  sim$addTransition("A" -> "R", gammaA)
   sim$addTransition("I" -> "R", gammaI)
   sim$addTransition("I" -> "T", tauI)
   sim$addTransition(
