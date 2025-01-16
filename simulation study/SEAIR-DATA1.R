@@ -24,6 +24,7 @@ likelihood <- function(parameters, fixed, data, times=c(0, data$t)) {
 }
 
 parameters_initial <- c(betaI1 =  0.6036950,betaI2 = 0.3255494, betaI3 = 0.4452518,  theta= 2.2819232, p= 0.1924505, I0=29)
+fixed["tauI"] = 0.15
 
 # burnin
 mcmc_samples <- metrop(obj=joint_log_prob,

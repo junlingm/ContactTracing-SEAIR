@@ -22,6 +22,8 @@ seair_model <- function(params, times, fixed) {
                            betaI3  = params[["betaI3"]],
                            theta = params[["theta"]],
                            p = params[["p"]]), fixed)
+  if (!is.na(params["tauI"]))
+    parameters_values["tauI"] <- params["tauI"]
   
   # solving
   ode(initial_values, times, seair_equations_3beta, parameters_values)
@@ -34,7 +36,6 @@ fixed <- c(sigma = 0.27,
            gammaA= 0.2,
            gammaI= 0.1, 
            q= 0.3,
-           tauI=0.15,
            N=300000)
 
 prior <- function(parameters) {
@@ -45,7 +46,7 @@ prior <- function(parameters) {
   betaI3_prior = dnorm(parameters[["betaI3"]], mean=0.4, sd=0.2, log = T)
   theta_prior = dnorm(parameters[["theta"]], mean=1.5, sd=1, log = T)
   p_prior = dunif(parameters[["p"]], 0, 1, log = T)
-  tauI_prior = if (is.na(parameters["tau"])) 0 else
+  tauI_prior = if (is.na(parameters["tauI"])) 0 else
     dnorm(parameters[["tauI"]], mean=0.15, sd=0.1, log = T)
   I0_prior = dnorm(parameters[["I0"]], mean=1, sd=1, log = T)
   return(betaI1_prior+betaI2_prior+betaI3_prior+theta_prior+p_prior+tauI_prior+I0_prior)
