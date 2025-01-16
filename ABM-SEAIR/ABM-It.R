@@ -3,7 +3,7 @@ if (packageVersion("ABM") < "0.4.2") {
   stop("need ABM version >= 0.4.2")
 }
 
-N=30000 # the population size
+N=3000 # the population size
 I0 = 20 # the initial number of infections
 
 p = 0.2 # the contact tracing coverage probability
@@ -56,16 +56,15 @@ run <- function() {
   sim$addTransition("E" -> "I", sigma*(1-q))
   sim$addTransition("E" -> "A", sigma*q)
   sim$addTransition("A" -> "T", tauA)
+  sim$addTransition("A" -> "R", gammaA)
   sim$addTransition("I"->"R", gammaI)
   sim$addTransition("I"->"T", tauI)
   sim$addTransition(
     "I" + "S" -> "I" + "E" ~ m, beta,
-    to_change_callback = check_susceptibility,
     changed_callback = form_pairs)
   sim$addTransition(
     "A" + "S" -> "A" + "E" ~ m, betaA,
-    to_change_callback = check_susceptibility,
-    changed_callback = form_paris)
+    changed_callback = form_pairs)
   sim$addTransition( # voluntary
     "T"->"X", theta, 
     changed_callback = trace)
