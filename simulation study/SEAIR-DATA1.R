@@ -3,65 +3,33 @@ library(mcmc)
 library(coda)
 library(ggmcmc)
 
+source("SEAIR.R")
 
-seair_model <- function(params, times,fixed) {
-  # the differential equations:
-  seair_equations <- function(time, variables, parameters) {
-    with(as.list(c(variables, parameters)), {
-      
-      if(time >60) betaI<-betaI3
-      else if (time>=40) betaI<-betaI2
-      else betaI<-betaI1
-      
-      betaA=betaI/3
-      
-      dS <- -betaI*S*I/N-betaA*S*A/N
-      dE <-  betaA*S*A/N+betaI*S*I/N-sigma*E-theta*p*ET
-      dA <-  sigma*q*E-theta*p*AT-theta*p*TA-gammaA*A
-      dI <-  sigma*(1-q)*E-(gammaI+tauI)*I-theta*p*IT-theta*p*TI
-      dQE <- theta*p*ET-sigma*q*QE-sigma*(1-q)*QE
-      dQA <- theta*p*AT+theta*p*TA+sigma*q*QE-gammaA*QA
-      dEI <- betaI*S*I/N-(sigma+tauI+gammaI)*EI-theta*p*EI*(IT/I+TI/I)
-      dEA <- betaA*S*A/N-(sigma+gammaA)*EA-theta*p*EA*(AT/A+TA/A)
-      dET <- tauI*EI+theta*p*EI*(IT/I+TI/I)-(sigma+theta)*ET
-      dAI <- sigma*q*EI-(gammaA+gammaI+tauI)*AI-theta*p*(AI*TI/I+AI*IT/I+AI*TA/A)
-      dIA <- sigma*(1-q)*EA-(gammaA+gammaI+tauI)*IA-theta*p*(IA*TA/A+IA*AT/A+IA*TI/I)
-      dII <- sigma*(1-q)*EI-2*(gammaI+tauI)*II-theta*p*II*(IT/I+TI/I+TI/I)
-      dAT <- theta*p*AI*(IT/I+TI/I)+tauI*AI+sigma*q*ET-(theta+gammaA)*AT-theta*p*TA*AT/A
-      dTA <- theta*p*TI*IA/I+tauI*IA-(theta+gammaA)*TA-theta*p*(TA*AT/A+TA*TA/A)
-      dIT <- sigma*(1-q)*ET+theta*p*II*(IT/I+TI/I)+tauI*II-(tauI+theta+gammaI)*IT-theta*p*TI*IT/I
-      dTI <- theta*p*TI*II/I+tauI*II-(tauI+theta+gammaI)*TI-theta*p*(TI*IT/I+TI*TI/I)
-      dT <-  tauI*I+theta*p*(IT+TI)+sigma*(1-q)*QE-theta*T;
-      dX <-  theta*T;
-      dR <- gammaA*A+gammaI*I+gammaA*QA
-      dnew <-  tauI*I+theta*p*(IT+TI)+sigma*(1-q)*QE
-      dcon <-  theta*p*(IT+TI)+sigma*(1-q)*QE
-      dvol <-  tauI*I
-      dsym <- sigma*(1-q)*E
-      
-      return(list(c(dS, dE,dA,dI,dQE, dQA,dEI,dEA,dET,dAI,dIA,dII,dAT,dTA,dIT,dTI,dT,dX,dR,dnew,dcon,dvol,dsym)))
-    })
-  }
-  
-  
-  # the initial values of variables
-  
-  I0 = params[[6]]*10
+seair_equations_3beta <- function(time, variables, parameters) {
+  if(time >60) betaI<-parameters["betaI3"]
+  else if (time>=40) betaI<-parameters["betaI2"]
+  else betaI<-parameters["betaI1"]
+  parameters[["betaI"]] <- betaI
+  parameters[["betaA"]] <- betaI / 3
+  seair_equations(time, variables, parameters)
+}
+
+seair_model <- function(params, times, fixed) {
+  I0 = params[["I0"]]
   initial_values <- c( S=fixed[["N"]] - 3*I0, E=I0, A=I0, I=I0, QE=0, QA = 0,
                        EI=0,EA=0,ET=0,AI = 0,IA =0,II =0,
                        AT = 0,TA = 0,
                        IT=0,TI=0,T=0,X=0,R=0,
                        new=0,con=0,vol=0,sym=0 )
   # the parameters values:
-  parameters_values <- c(c(betaI1  = params[[1]],
-                           betaI2  = params[[2]],
-                           betaI3  = params[[3]],
-                           theta = params[[4]],
-                           p = params[[5]]), fixed)
-  
+  parameters_values <- c(c(betaI1  = params[["betaI1"]],
+                           betaI2  = params[["betaI2"]],
+                           betaI3  = params[["betaI3"]],
+                           theta = params[["theta"]],
+                           p = params[["p"]]), fixed)
   
   # solving
-  ode(initial_values, times, seair_equations, parameters_values)
+  ode(initial_values, times, seair_equations_3beta, parameters_values)
 }
 
 
@@ -77,12 +45,13 @@ fixed <- c(sigma = 0.27,
 # 观测数据
 
 
-data <- read.csv("T80-Nlarge-3beta-2.csv", header = TRUE)
+data <- read.csv("simulation study/T80-Nlarge-3beta-2.csv", header = TRUE)
 
 
 likelihood <- function(parameters, fixed, data, times=c(0, data$t)) {
   if (any(parameters<0))
     return(-Inf)
+  names(parameters) <- names(parameters_initial)
   model_output <- seair_model( times = times,  params = parameters, fixed = fixed)  
   observations1<- data$newcase
   predictions1<- diff(model_output[,"new"])
@@ -113,7 +82,7 @@ prior <- function(parameters) {
 
 
 
-parameters_initial <- c(betaI1 =  0.6036950,betaI2 = 0.3255494, betaI3 = 0.4452518,  theta= 2.2819232, p= 0.1924505, I0=2.9015087)
+parameters_initial <- c(betaI1 =  0.6036950,betaI2 = 0.3255494, betaI3 = 0.4452518,  theta= 2.2819232, p= 0.1924505, I0=29)
 
 
 
