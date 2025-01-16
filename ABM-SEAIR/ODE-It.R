@@ -59,8 +59,8 @@ seair_model <- function(params, times,fixed) {
 fixed <- c(sigma = sigma,
            gammaA= gammaA,
            gammaI= gammaI, 
-           q= 0.3,
-           N=3000)
+           q= q,
+           N=N)
 
 
 t = 0:250
