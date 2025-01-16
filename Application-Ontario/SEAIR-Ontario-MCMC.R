@@ -1,6 +1,3 @@
-#SEAIR three BETA
-rm(list = ls())
-
 library(deSolve)
 library(mcmc)
 library(coda)

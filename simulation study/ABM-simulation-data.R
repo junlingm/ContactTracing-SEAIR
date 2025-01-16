@@ -1,4 +1,3 @@
-rm(list = ls())
 library(ABM)
 
 N = 10000  # the population size
